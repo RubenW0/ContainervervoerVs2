@@ -15,7 +15,13 @@ namespace Containervervoer
                 List<Container> containers = new List<Container>();
 
                 containers.Add(new Container(Container.Type.Coolable, 30));
-                //containers.Add(new Container(Container.Type.Valuable, 30));
+                containers.Add(new Container(Container.Type.Coolable, 30));
+                containers.Add(new Container(Container.Type.Coolable, 30));
+                containers.Add(new Container(Container.Type.Coolable, 30));
+                containers.Add(new Container(Container.Type.Valuable, 30));
+                containers.Add(new Container(Container.Type.Valuable, 30));
+                containers.Add(new Container(Container.Type.Valuable, 30));
+                containers.Add(new Container(Container.Type.Valuable, 30));
 
                 Console.WriteLine("Attempting to place containers on the ship...");
 

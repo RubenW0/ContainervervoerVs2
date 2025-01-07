@@ -11,8 +11,8 @@ namespace ContainervervoerVs2
     public class Ship
     {
         public ContainerStack[,] Layout { get; set; }
-        public int Y { get; set; } = 4; //rijen
-        public int X { get; set; } = 3; //stapels per rij
+        public int Y { get; set; } = 2; //aantal rijen
+        public int X { get; set; } = 5; //stapels per rij
         public int MaxWeight { get; set; } = 300; //in ton
 
 
@@ -140,6 +140,8 @@ namespace ContainervervoerVs2
         {
             string stack = "";
             string weight = "";
+
+            // Loop door de rijen (Y)
             for (int z = 0; z < Y; z++)
             {
                 if (z > 0)
@@ -148,6 +150,7 @@ namespace ContainervervoerVs2
                     weight += '/';
                 }
 
+                // Loop door de kolommen (X)
                 for (int x = 0; x < X; x++)
                 {
                     if (x > 0)
@@ -172,13 +175,16 @@ namespace ContainervervoerVs2
                 }
             }
 
-            string url = "https://i872272.luna.fhict.nl/ContainerVisualizer/index.html?length=" + Y + "&width=" + X + "&stacks=" + stack + "&weights=" + weight;
+            // URL aanpassen: length = X (breedte) en width = Y (hoogte)
+            string url = "https://i872272.luna.fhict.nl/ContainerVisualizer/index.html?length=" + X + "&width=" + Y + "&stacks=" + stack + "&weights=" + weight;
 
+            // Open de URL in de standaard webbrowser
             Process.Start(new ProcessStartInfo()
             {
                 FileName = url,
                 UseShellExecute = true
             });
         }
+
     }
 }
