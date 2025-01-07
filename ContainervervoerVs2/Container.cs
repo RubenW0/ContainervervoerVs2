@@ -17,7 +17,7 @@ namespace ContainervervoerVs2
         }
 
         public Type ContainerType { get; set; }
-        public int ContainerWeight { get; set; }
+        public int ContainerWeight { get; set; } 
 
 
 

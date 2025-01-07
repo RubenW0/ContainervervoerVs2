@@ -16,6 +16,8 @@ namespace ContainervervoerVs2
             containers = new List<Container>();
         }
 
+        public IReadOnlyList<Container> Containers => containers;
+
         public int TotalWeight()
         {
             int totalWeight = 0;
