@@ -1,190 +1,226 @@
 ﻿using ContainervervoerVs2;
+using System.Collections.ObjectModel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ContainervervoerVs2
 {
     public class Ship
     {
-        public ContainerStack[,] Layout { get; set; }
-        public int Y { get; set; } = 2; //aantal rijen
-        public int X { get; set; } = 5; //stapels per rij
-        public int MaxWeight { get; set; } = 300; //in ton
+        public int Length { get; set; }
+        public int Width { get; set; }
+        private List<Row> _rows = new List<Row>();
+        public ReadOnlyCollection<Row> Rows => _rows.AsReadOnly();
+        private readonly int MaxBalanceDifference = 20;
 
-
-        public Ship()
+        public Ship(int length, int width)
         {
-            Layout = new ContainerStack[Y, X];
-            for (int y = 0; y < Y; y++)
+            try
             {
-                for (int x = 0; x < X; x++)
+                if (length <= 0)
                 {
-                    Layout[y, x] = new ContainerStack();
+                    throw new ArgumentException("Length moet groter dan 0 zijn");
                 }
+                if (width <= 0)
+                {
+                    throw new ArgumentException("Width moet groter dan 0 zijn");
+                }
+                Length = length;
+                Width = width;
+                for (int i = 0; i < width; i++) //rij aanmaken
+                {
+                    _rows.Add(new Row(length));
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(ex.Message); throw; // Hergooi de uitzondering na logging, zodat de aanroeper het ook weet
             }
         }
 
-        public int TotalWeight()
+        public int CalculateTotalWeight()
         {
             int totalWeight = 0;
-            foreach (var stack in Layout)
+            foreach (Row row in Rows)
             {
-                totalWeight += stack.TotalWeight();
+                totalWeight += row.CalculateTotalWeight();
             }
+
             return totalWeight;
         }
 
-        public bool PlaceContainer(Container container)
+        public bool TryToAddContainer(Container container)
         {
-            if (TotalWeight() + container.ContainerWeight > MaxWeight)
-            {
-                Console.WriteLine("Schip overschrijdt maximaal gewicht. Container kan niet worden toegevoegd.");
-                return false;
-            }
+            int leftWeight = CalculateLeftWeight();
+            int rightWeight = CalculateRightWeight();
+            int middleWeight = CalculateMiddleWeight();
+            int minWeight = Math.Min(leftWeight, Math.Min(rightWeight, middleWeight));
+            int middleIndex = Width / 2;
 
-            if (container.ContainerType == Container.Type.Valuable || container.ContainerType == Container.Type.CoolableValuable)
+            // Probeer de container toe te voegen aan de middelste rij als het een oneven breedte is en de middelste rij het minst zwaar is
+            if ((Width % 2 != 0 && middleWeight == minWeight) || Width == 1)
             {
-                if (TryPlaceInFrontOrBack(container))
-                {
-                    return true;
-                }
-
-                if (TryPlaceInAccessibleRow(container))
-                {
-                    return true;
-                }
-            }
-            else
-            {
-                if (TryPlaceInAnyRow(container))
+                if (_rows[middleIndex].TryToAddContainer(container))
                 {
                     return true;
                 }
             }
 
-            Console.WriteLine("Geen geldige plek gevonden voor container.");
-            return false;
-        }
-
-        private bool TryPlaceInFrontOrBack(Container container)
-        {
-            for (int x = 0; x < X; x++)
+            // Voeg de container toe aan de rij met het minste gewicht
+            if (leftWeight <= rightWeight)
             {
-                if (Layout[0, x].AddContainer(container))
+                foreach (Row row in _rows.Take(middleIndex).OrderBy(row => row.CalculateTotalWeight()))
                 {
-                    return true;
-                }
-            }
-
-            for (int x = 0; x < X; x++)
-            {
-                if (Layout[Y - 1, x].AddContainer(container))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private bool TryPlaceInAccessibleRow(Container container)
-        {
-            for (int y = 1; y < Y - 1; y++) 
-            {
-                bool isAccessible = true;
-                for (int x = 0; x < X; x++)
-                {
-                    if (Layout[y - 1, x].TotalWeight() > 0)
-                    {
-                        isAccessible = false;
-                        break;
-                    }
-                }
-
-                if (isAccessible)
-                {
-                    for (int x = 0; x < X; x++)
-                    {
-                        if (Layout[y, x].AddContainer(container))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private bool TryPlaceInAnyRow(Container container)
-        {
-            for (int y = 0; y < Y; y++)
-            {
-                for (int x = 0; x < X; x++)
-                {
-                    if (Layout[y, x].AddContainer(container))
+                    if (row.TryToAddContainer(container))
                     {
                         return true;
                     }
                 }
             }
-
-            return false;
-        }
-
-        public void StartVisualizer()
-        {
-            string stack = "";
-            string weight = "";
-
-            // Loop door de rijen (Y)
-            for (int z = 0; z < Y; z++)
+            else
             {
-                if (z > 0)
+                foreach (Row row in _rows.Skip(middleIndex + Width % 2).OrderBy(row => row.CalculateTotalWeight()))
                 {
-                    stack += '/';
-                    weight += '/';
-                }
-
-                // Loop door de kolommen (X)
-                for (int x = 0; x < X; x++)
-                {
-                    if (x > 0)
+                    if (row.TryToAddContainer(container))
                     {
-                        stack += ",";
-                        weight += ",";
-                    }
+                        return true;
 
-                    if (Layout[z, x].Containers.Count > 0)
-                    {
-                        for (int y = 0; y < Layout[z, x].Containers.Count; y++)
-                        {
-                            Container container = Layout[z, x].Containers[y];
-                            stack += Convert.ToString((int)container.ContainerType);
-                            weight += Convert.ToString(container.ContainerWeight);
-                            if (y < (Layout[z, x].Containers.Count - 1))
-                            {
-                                weight += "-";
-                            }
-                        }
                     }
                 }
             }
 
-            // URL aanpassen: length = X (breedte) en width = Y (hoogte)
-            string url = "https://i872272.luna.fhict.nl/ContainerVisualizer/index.html?length=" + X + "&width=" + Y + "&stacks=" + stack + "&weights=" + weight;
+            return false;
+        }
 
-            // Open de URL in de standaard webbrowser
-            Process.Start(new ProcessStartInfo()
+        public bool IsProperlyLoaded()
+        {
+            int maxWeight = Length * Width * (Stack.StackCapacity + Container.MaxWeight);
+            int totalWeight = CalculateTotalWeight();
+
+            if (2 * totalWeight >= maxWeight)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool IsBalanced()
+        {
+            int totalWeight = CalculateTotalWeight();
+            double difference = Math.Abs(CalculateLeftWeight() - CalculateRightWeight()) / (double)totalWeight * 100; // berekent het % verschil van links & rechts
+
+            if (difference > MaxBalanceDifference)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public int CalculateLeftWeight()
+        {
+            int leftWeight = 0;
+            for (int i = 0; i < Width / 2; i++)
+            {
+                leftWeight += _rows[i].CalculateTotalWeight();
+            }
+
+            return leftWeight;
+        }
+
+        public int CalculateRightWeight()
+        {
+            int rightWeight = 0;
+            for (int i = Width / 2 + Width % 2; i < Width; i++)
+            {
+                rightWeight += _rows[i].CalculateTotalWeight();
+            }
+
+            return rightWeight;
+        }
+
+        public int CalculateMiddleWeight()
+        {
+            int middleWeight = 0;
+
+            for (int i = Width / 2; i < Width / 2 + Width % 2; i++)
+            {
+                middleWeight += _rows[i].CalculateTotalWeight();
+            }
+
+            return middleWeight;
+        }
+
+
+        public void StartVisualizer()
+        {
+            string stacks = string.Empty;
+            string weights = string.Empty;
+
+            for (int i = 0; i < _rows.Count; i++)
+            {
+                Row row = _rows[i];
+
+                if (i > 0)
+                {
+                    stacks += "/";
+                    weights += "/";
+                }
+
+                for (int j = 0; j < row.Stacks.Count; j++)
+                {
+                    Stack stack = row.Stacks[j];
+
+                    if (j > 0)
+                    {
+                        stacks += ",";
+                        weights += ",";
+                    }
+
+                    for (int k = 0; k < stack.Containers.Count; k++)
+                    {
+                        Container container = stack.Containers[k];
+
+                        if (k > 0)
+                        {
+                            stacks += "-";
+                            weights += "-";
+                        }
+
+                        stacks += GetContainerType(container);
+                        weights += container.Weight;
+                    }
+                }
+            }
+
+            string url = $"https://app6i872272.luna.fhict.nl/?length={Length}&width={Width}&stacks={stacks}&weights={weights}";
+
+            Process.Start(new ProcessStartInfo
             {
                 FileName = url,
                 UseShellExecute = true
             });
         }
 
+        private int GetContainerType(Container container)
+        {
+            if (container.IsValuable)
+            {
+                if (container.NeedsCooling)
+                {
+                    return 4;
+                }
+                return 2;
+            }
+
+            if (container.NeedsCooling)
+            {
+                return 3;
+            }
+
+            return 1;
+        }
     }
 }
