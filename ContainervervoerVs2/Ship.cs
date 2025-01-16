@@ -145,6 +145,12 @@ namespace ContainervervoerVs2
 
         public void StartVisualizer()
         {
+            string url = CreateVisualizerUrl();
+            OpenVisualizerUrl(url);
+        }
+
+        private string CreateVisualizerUrl()
+        {
             string stacks = string.Empty;
             string weights = string.Empty;
 
@@ -184,8 +190,11 @@ namespace ContainervervoerVs2
                 }
             }
 
-            string url = $"https://app6i872272.luna.fhict.nl/?length={Length}&width={Width}&stacks={stacks}&weights={weights}";
+            return $"https://app6i872272.luna.fhict.nl/?length={Length}&width={Width}&stacks={stacks}&weights={weights}";
+        }
 
+        private void OpenVisualizerUrl(string url)
+        {
             Process.Start(new ProcessStartInfo
             {
                 FileName = url,
