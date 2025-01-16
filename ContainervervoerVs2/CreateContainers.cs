@@ -10,7 +10,7 @@ namespace ContainervervoerVs2
     {
         private static readonly Random rand = new Random();
 
-        public static List<Container> CreateContainer(int count, bool isValuable, bool needsCooling, int weight = 0)
+        public static List<Container> CreateContainer(int count, Container.Type containerType, int weight = 0)
         {
             List<Container> containers = new List<Container>();
 
@@ -25,7 +25,7 @@ namespace ContainervervoerVs2
                 {
                     randomWeight = weight;
                 }
-                containers.Add(new Container(randomWeight, isValuable, needsCooling));
+                containers.Add(new Container(randomWeight, containerType));
             }
 
             return containers.OrderByDescending(container => container.Weight).ToList();

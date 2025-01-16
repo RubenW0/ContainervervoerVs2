@@ -9,19 +9,19 @@ namespace ContainervervoerVs2
 
         public Row(int length)
         {
-            for (int j = 0; j < length; j++)
+            for (int i = 0; i < length; i++)
             {
-                bool isCooled = j == 0; //kijkt of hij op de eerste plek in de rij is
+                bool isCooled = i == 0; // Check if the first stack needs cooling
                 _stacks.Add(new Stack(isCooled));
             }
         }
 
-        public int CalculateTotalWeight()
+        public int GetTotalWeight()
         {
             int totalWeight = 0;
             foreach (Stack stack in Stacks)
             {
-                totalWeight += stack.CalculateTotalWeight();
+                totalWeight += stack.GetTotalWeight();
             }
 
             return totalWeight;
@@ -29,17 +29,18 @@ namespace ContainervervoerVs2
 
         public bool TryToAddContainer(Container container)
         {
-            List<(Stack stack, int index)> indexedStacks = Stacks.Select((stack, index) => (stack, index))
-                .OrderBy(tuple => tuple.stack.CalculateTotalWeight()) // bakje met meerdere objecten
+            var sortedStacks = Stacks
+                .Select((stack, index) => (stack, index))
+                .OrderBy(tuple => tuple.stack.GetTotalWeight())
                 .ToList();
 
-            foreach ((Stack stack, int index) in indexedStacks)
+            foreach (var (stack, index) in sortedStacks)
             {
                 if (stack.TryToAddContainer(container))
                 {
                     if (!container.IsValuable)
                     {
-                        if (IsPreviousAndNextReachable(index))
+                        if (AreFrontAndBackStacksAccessible(index))
                         {
                             return true;
                         }
@@ -47,7 +48,7 @@ namespace ContainervervoerVs2
                     }
                     else
                     {
-                        if (IsStackReachable(index) && IsPreviousAndNextReachable(index))
+                        if (IsStackAccessible(index) && AreFrontAndBackStacksAccessible(index))
                         {
                             return true;
                         }
@@ -59,7 +60,7 @@ namespace ContainervervoerVs2
             return false;
         }
 
-        public bool IsStackReachable(int index)
+        public bool IsStackAccessible(int index)
         {
             if (index == 0 || index == Stacks.Count - 1)
             {
@@ -68,7 +69,7 @@ namespace ContainervervoerVs2
 
             int currentHeight = Stacks[index].Containers.Count;
 
-            if (currentHeight == 0)
+            if (currentHeight == 0) 
             {
                 return true;
             }
@@ -84,22 +85,30 @@ namespace ContainervervoerVs2
             return currentHeight > nextHeight || currentHeight > previousHeight;
         }
 
-        public bool IsPreviousAndNextReachable(int index)
+        public bool AreFrontAndBackStacksAccessible(int index)
         {
-            bool previousIsReachable = true;
-            bool nextIsReachable = true;
+            bool isPreviousAccessible = IsPreviousStackAccessible(index);
+            bool isNextAccessible = IsNextStackAccessible(index);
 
-            if (index - 1 >= 0) // Controleren of groter of gelijk aan 0
+            return isPreviousAccessible && isNextAccessible;
+        }
+
+        private bool IsPreviousStackAccessible(int index)
+        {
+            if (index - 1 >= 0)
             {
-                previousIsReachable = IsStackReachable(index - 1);
+                return IsStackAccessible(index - 1);
             }
+            return true;
+        }
 
-            if (index + 1 < Stacks.Count) // Controleren of kleiner dan het aantal stapels
+        private bool IsNextStackAccessible(int index)
+        {
+            if (index + 1 < Stacks.Count)
             {
-                nextIsReachable = IsStackReachable(index + 1);
+                return IsStackAccessible(index + 1);
             }
-
-            return previousIsReachable && nextIsReachable;
+            return true;
         }
     }
 }

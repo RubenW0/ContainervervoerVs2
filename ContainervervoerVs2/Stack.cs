@@ -2,12 +2,12 @@
 
 namespace ContainervervoerVs2;
 
-    public class Stack
+public class Stack
 {
     private List<Container> _containers = new List<Container>();
     public ReadOnlyCollection<Container> Containers => _containers.AsReadOnly();
-    public bool IsCooled { get; set; }
-    public bool HasValuable => Containers.Any(container => container.IsValuable);
+    public bool IsCooled { get; private set; }
+    public bool HasValuable => _containers.Any(container => container.IsValuable);
     public static readonly int StackCapacity = 120;
 
     public Stack(bool isCooled)
@@ -15,35 +15,23 @@ namespace ContainervervoerVs2;
         IsCooled = isCooled;
     }
 
-    public bool CanSupportWeight(Container container)
+    public bool CanHoldWeight(Container container)
     {
-        if (Containers.Count > 0)
+        int currentWeight = 0;
+        foreach (var existingContainer in _containers)
         {
-            int totalWeight = CalculateTotalWeight();
-            if (totalWeight - Containers[0].Weight + container.Weight <= StackCapacity)
-            {
-                return true;
-            }
+            currentWeight += existingContainer.Weight;
         }
-        else
-        {
-            if (container.Weight <= StackCapacity)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return currentWeight + container.Weight <= StackCapacity;
     }
 
-    public int CalculateTotalWeight()
+    public int GetTotalWeight()
     {
         int totalWeight = 0;
-        foreach (Container container in Containers)
+        foreach (var container in _containers)
         {
             totalWeight += container.Weight;
         }
-
         return totalWeight;
     }
 
@@ -59,7 +47,7 @@ namespace ContainervervoerVs2;
             return false;
         }
 
-        if (CanSupportWeight(container))
+        if (CanHoldWeight(container))
         {
             _containers.Add(container);
             return true;

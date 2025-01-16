@@ -1,6 +1,5 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ContainervervoerVs2;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 
 namespace ContainervervoerVs2.Tests
@@ -8,36 +7,95 @@ namespace ContainervervoerVs2.Tests
     [TestClass]
     public class ShipTests
     {
-
         [TestMethod]
-        public void IsProperlyLoaded_ShouldReturnFalse_WhenShipIsNotProperlyLoaded()
+        public void Ship_Initialization_ShouldSetProperties()
         {
             // Arrange
-            var ship = new Ship(10, 2);
-
-            // Voeg containers en rijen toe zodat het schip niet goed geladen is
+            int length = 10;
+            int width = 5;
 
             // Act
-            bool isProperlyLoaded = ship.IsProperlyLoaded();
+            Ship ship = new Ship(length, width);
 
             // Assert
-            Assert.IsFalse(isProperlyLoaded);
+            Assert.AreEqual(length, ship.Length);
+            Assert.AreEqual(width, ship.Width);
+            Assert.AreEqual(width, ship.Rows.Count);
         }
 
-        // Test voor IsBalanced
         [TestMethod]
-        public void IsBalanced_ShouldReturnTrue_WhenShipIsBalanced()
+        public void Ship_Initialization_ShouldThrowExceptionForInvalidLength()
         {
             // Arrange
-            var ship = new Ship(10, 2);
+            int length = 0;
+            int width = 5;
 
-            // Voeg containers toe zodat het schip gebalanceerd is
+            // Act & Assert
+            var ex = Assert.ThrowsException<ArgumentException>(() => new Ship(length, width));
+            Assert.AreEqual("Length must be greater than 0", ex.Message);
+        }
+
+        [TestMethod]
+        public void Ship_Initialization_ShouldThrowExceptionForInvalidWidth()
+        {
+            // Arrange
+            int length = 10;
+            int width = 0;
+
+            // Act & Assert
+            var ex = Assert.ThrowsException<ArgumentException>(() => new Ship(length, width));
+            Assert.AreEqual("Width must be greater than 0", ex.Message);
+        }
+
+        [TestMethod]
+        public void GetTotalWeight_ShouldReturnCorrectTotalWeight()
+        {
+            // Arrange
+            Ship ship = new Ship(10, 5);
+            Container container1 = new Container(10, Container.Type.Normal);
+            Container container2 = new Container(20, Container.Type.Valuable);
+            ship.TryToAddContainer(container1);
+            ship.TryToAddContainer(container2);
 
             // Act
-            bool isBalanced = ship.IsBalanced();
+            int totalWeight = ship.GetTotalWeight();
 
             // Assert
-            Assert.IsTrue(isBalanced);
+            Assert.AreEqual(30, totalWeight);
         }
+
+        [TestMethod]
+        public void TryToAddContainer_ShouldAddContainerToCorrectRow()
+        {
+            // Arrange
+            Ship ship = new Ship(10, 5);
+            Container container = new Container(10, Container.Type.Normal);
+
+            // Act
+            bool result = ship.TryToAddContainer(container);
+
+            // Assert
+            Assert.IsTrue(result);
+            Assert.AreEqual(10, ship.GetTotalWeight());
+        }
+
+        [TestMethod]
+        public void IsBalanced_ShouldReturnTrueWhenBalanced()
+        {
+            // Arrange
+            Ship ship = new Ship(10, 4);
+            ship.TryToAddContainer(new Container(10, Container.Type.Normal));
+            ship.TryToAddContainer(new Container(10, Container.Type.Normal));
+            ship.TryToAddContainer(new Container(10, Container.Type.Normal));
+            ship.TryToAddContainer(new Container(10, Container.Type.Normal));
+
+            // Act
+            bool result = ship.IsBalanced();
+
+            // Assert
+            Assert.IsTrue(result);
+        }
+
     }
 }
+

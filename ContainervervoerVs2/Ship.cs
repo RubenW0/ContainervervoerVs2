@@ -20,31 +20,32 @@ namespace ContainervervoerVs2
             {
                 if (length <= 0)
                 {
-                    throw new ArgumentException("Length moet groter dan 0 zijn");
+                    throw new ArgumentException("Length must be greater than 0");
                 }
                 if (width <= 0)
                 {
-                    throw new ArgumentException("Width moet groter dan 0 zijn");
+                    throw new ArgumentException("Width must be greater than 0");
                 }
                 Length = length;
                 Width = width;
-                for (int i = 0; i < width; i++) //rij aanmaken
+                for (int i = 0; i < width; i++) // Create rows
                 {
                     _rows.Add(new Row(length));
                 }
             }
             catch (ArgumentException ex)
             {
-                Console.WriteLine(ex.Message); throw; // Hergooi de uitzondering na logging, zodat de aanroeper het ook weet
+                Console.WriteLine(ex.Message);
+                throw;
             }
         }
 
-        public int CalculateTotalWeight()
+        public int GetTotalWeight()
         {
             int totalWeight = 0;
             foreach (Row row in Rows)
             {
-                totalWeight += row.CalculateTotalWeight();
+                totalWeight += row.GetTotalWeight();
             }
 
             return totalWeight;
@@ -52,13 +53,13 @@ namespace ContainervervoerVs2
 
         public bool TryToAddContainer(Container container)
         {
-            int leftWeight = CalculateLeftWeight();
-            int rightWeight = CalculateRightWeight();
-            int middleWeight = CalculateMiddleWeight();
+            int leftWeight = GetLeftWeight();
+            int rightWeight = GetRightWeight();
+            int middleWeight = GetMiddleWeight();
             int minWeight = Math.Min(leftWeight, Math.Min(rightWeight, middleWeight));
             int middleIndex = Width / 2;
 
-            // Probeer de container toe te voegen aan de middelste rij als het een oneven breedte is en de middelste rij het minst zwaar is
+            // Try to add to middle row
             if ((Width % 2 != 0 && middleWeight == minWeight) || Width == 1)
             {
                 if (_rows[middleIndex].TryToAddContainer(container))
@@ -67,10 +68,10 @@ namespace ContainervervoerVs2
                 }
             }
 
-            // Voeg de container toe aan de rij met het minste gewicht
+            // Choose row with lowest weight
             if (leftWeight <= rightWeight)
             {
-                foreach (Row row in _rows.Take(middleIndex).OrderBy(row => row.CalculateTotalWeight()))
+                foreach (Row row in _rows.Take(middleIndex).OrderBy(row => row.GetTotalWeight()))
                 {
                     if (row.TryToAddContainer(container))
                     {
@@ -80,12 +81,11 @@ namespace ContainervervoerVs2
             }
             else
             {
-                foreach (Row row in _rows.Skip(middleIndex + Width % 2).OrderBy(row => row.CalculateTotalWeight()))
+                foreach (Row row in _rows.Skip(middleIndex + Width % 2).OrderBy(row => row.GetTotalWeight()))
                 {
                     if (row.TryToAddContainer(container))
                     {
                         return true;
-
                     }
                 }
             }
@@ -96,63 +96,52 @@ namespace ContainervervoerVs2
         public bool IsProperlyLoaded()
         {
             int maxWeight = Length * Width * (Stack.StackCapacity + Container.MaxWeight);
-            int totalWeight = CalculateTotalWeight();
+            int totalWeight = GetTotalWeight();
 
-            if (2 * totalWeight >= maxWeight)
-            {
-                return true;
-            }
-
-            return false;
+            return 2 * totalWeight >= maxWeight;
         }
 
         public bool IsBalanced()
         {
-            int totalWeight = CalculateTotalWeight();
-            double difference = Math.Abs(CalculateLeftWeight() - CalculateRightWeight()) / (double)totalWeight * 100; // berekent het % verschil van links & rechts
+            int totalWeight = GetTotalWeight();
+            double difference = Math.Abs(GetLeftWeight() - GetRightWeight()) / (double)totalWeight * 100; // bereken verschil in percentage
 
-            if (difference > MaxBalanceDifference)
-            {
-                return false;
-            }
-
-            return true;
+            return difference <= MaxBalanceDifference;
         }
 
-        public int CalculateLeftWeight()
+        public int GetLeftWeight()
         {
             int leftWeight = 0;
             for (int i = 0; i < Width / 2; i++)
             {
-                leftWeight += _rows[i].CalculateTotalWeight();
+                leftWeight += _rows[i].GetTotalWeight();
             }
 
             return leftWeight;
         }
 
-        public int CalculateRightWeight()
+        public int GetRightWeight()
         {
             int rightWeight = 0;
             for (int i = Width / 2 + Width % 2; i < Width; i++)
             {
-                rightWeight += _rows[i].CalculateTotalWeight();
+                rightWeight += _rows[i].GetTotalWeight();
             }
 
             return rightWeight;
         }
 
-        public int CalculateMiddleWeight()
+        public int GetMiddleWeight()
         {
             int middleWeight = 0;
 
             for (int i = Width / 2; i < Width / 2 + Width % 2; i++)
             {
-                middleWeight += _rows[i].CalculateTotalWeight();
+                middleWeight += _rows[i].GetTotalWeight();
             }
 
             return middleWeight;
         }
-
 
         public void StartVisualizer()
         {
