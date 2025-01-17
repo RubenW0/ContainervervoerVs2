@@ -19,7 +19,7 @@ namespace Containervervoer
 
             containers.AddRange(CreateContainers.CreateContainer(8, ContainervervoerVs2.Container.Type.Coolable, ContainervervoerVs2.Container.MaxWeight));  // coolable containers
             containers.AddRange(CreateContainers.CreateContainer(5, ContainervervoerVs2.Container.Type.CoolableValuable, ContainervervoerVs2.Container.MaxWeight));  // coolable & valuable containers
-            containers.AddRange(CreateContainers.CreateContainer(40, ContainervervoerVs2.Container.Type.Normal, ContainervervoerVs2.Container.MaxWeight)); // normal containers
+            containers.AddRange(CreateContainers.CreateContainer(5, ContainervervoerVs2.Container.Type.Normal, ContainervervoerVs2.Container.MaxWeight)); // normal containers
             containers.AddRange(CreateContainers.CreateContainer(30, ContainervervoerVs2.Container.Type.Valuable, ContainervervoerVs2.Container.MaxWeight)); // valuable containers
 
             foreach (ContainervervoerVs2.Container container in containers)
@@ -27,27 +27,14 @@ namespace Containervervoer
                 ship.TryToAddContainer(container);
             }
 
-            try
+            if (!ship.IsProperlyLoaded())
             {
-                if (!ship.IsProperlyLoaded())
-                {
-                    throw new Exception();
-                }
+                Console.WriteLine("Warning: Gewicht is te laag.");
             }
-            catch (Exception ex)
+
+            if (!ship.IsBalanced())
             {
-                throw new Exception("Gewicht is te laag.", ex);
-            }
-            try
-            {
-                if (!ship.IsBalanced())
-                {
-                    throw new Exception();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Het gewicht is niet eerlijk verdeel", ex);
+                Console.WriteLine("Warning: Het gewicht is niet eerlijk verdeel.");
             }
 
             Console.WriteLine("\nLaunching the visualizer...");
